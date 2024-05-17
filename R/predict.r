@@ -6,6 +6,7 @@
 #' @param output_folder Path to the output folder.
 #' @return NULL
 #' @export
+#' 
 predict <- function(list) {
   pres_train <- list$pres_train
   backg_train <- list$backg_train
@@ -13,7 +14,7 @@ predict <- function(list) {
   backg_test <- list$backg_test
   shapefile_path <-  list$shapefile_path
   output_folder <- list$output_folder
-
+  
   input_file <- list$input_file
   predictors_masked <- brick(input_file)
   
@@ -40,13 +41,19 @@ predict <- function(list) {
   for (point in points_to_convert) {
     converted_points[[point]] <- convert_coordinates_to_dataframe(coordinates(train_test_data[[point]]))
   }
- 
+  
   output_plot <- file.path(output_folder, "important_predictors_plot.png")
   maxent()
-  mx <- maxent(predictors_masked, converted_points[["pres_train"]])
+  suppressWarnings({
+    mx <- maxent(predictors_masked, converted_points[["pres_train"]])
+  })
+  
   plot(mx)
   
-  ggsave(output_plot, plot = mx, width = 10, height = 8)
+  # Save the plot using base R's png function
+  png(filename = output_plot, width = 10, height = 8, units = "in", res = 300)
+  plot(mx)
+  dev.off()
   
   e_mx <- evaluate(converted_points[["pres_test"]],converted_points[["backg_test"]], mx, predictors_masked)
   print(e_mx)
@@ -65,17 +72,24 @@ predict <- function(list) {
   
   p_mx <- predict(predictors_masked, mx)
   
-  df_maxent <- as.data.frame(p_mx, xy = TRUE)
+  # Convertir le raster en SpatialPixelsDataFrame
+  spdf <- as(p_mx, "SpatialPixelsDataFrame")
   
-  maxentmap <- ggplot(df_maxent, aes(x = x, y = y, fill = layer)) + 
-    geom_raster() + 
-    scale_fill_gradientn(colors = terrain.colors(10)[10:1]) + 
-    labs(fill = "Likelihood") + 
-    coord_equal() + 
-    ggtitle("Occurrence prediction with Maxent model") + 
-    theme_minimal() + 
-    theme(legend.position = "right") + 
-    geom_polygon(data = shapefile, aes(x = long, y = lat, group = group),  fill = NA)
+  # Convertir le SpatialPixelsDataFrame recadré en dataframe
+  df_maxent <- as.data.frame(spdf)
+  
+  # Continuer avec le reste de votre code
+  suppressWarnings({
+    maxentmap <- ggplot(df_maxent, aes(x = x, y = y, fill = layer)) + 
+      geom_raster() + 
+      scale_fill_gradientn(colors = terrain.colors(10)[10:1]) + 
+      labs(fill = "Likelihood") + 
+      coord_equal() + 
+      ggtitle("Occurrence prediction with Maxent model") + 
+      theme_minimal() + 
+      theme(legend.position = "right") + 
+      geom_polygon(data = shapefile, aes(x = long, y = lat, group = group),  fill = NA)
+  })
   
   output_plot <- file.path(output_folder, "maxent_plot.png")
   ggsave(output_plot, plot = maxentmap, width = 10, height = 8)
