@@ -31,7 +31,7 @@ data_vis <- function(dataset_path, shapefile_path, output_folder) {
     stop("Column names must be 'X' and 'Y'.")
   }
   
-  shapefile <- shapefile(shapefile_path)
+  shapefile <- st_read(shapefile_path)
   shapefile_sf <- st_as_sf(shapefile)
   
   map <- ggplot() +
