@@ -8,12 +8,6 @@
 #' @return A list containing coordinates and shapefile path.
 #' @export
 # Load necessary libraries
-library(dismo)
-library(sf)
-library(sp)
-library(ggplot2)
-library(raster)
-library(geodata)
 
 data_vis <- function(dataset_path, shapefile_path, output_folder) {
   if (!file.exists(dataset_path)) {
@@ -30,6 +24,13 @@ data_vis <- function(dataset_path, shapefile_path, output_folder) {
   if (!all(c("X", "Y") %in% names(data))) {
     stop("Column names must be 'X' and 'Y'.")
   }
+
+  library(dismo)
+  library(sf)
+  library(sp)
+  library(ggplot2)
+  library(raster)
+  library(geodata)
   
   shapefile <- st_read(shapefile_path)
   shapefile_sf <- st_as_sf(shapefile)
