@@ -29,7 +29,7 @@ data_train <- function(list,input_file) {
               backg_train = backg_train,
               backg_test = backg_test,
               shapefile_path = shapefile_path,
-              output_folder = output_folder))
+              output_folder = output_folder,input_file=input_file))
 }
 
 #train_test_data <- data_train(data_list)
