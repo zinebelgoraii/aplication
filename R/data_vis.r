@@ -15,7 +15,7 @@ library(ggplot2)
 library(raster)
 library(geodata)
 
-generate_map <- function(dataset_path, shapefile_path, output_folder) {
+data_vis <- function(dataset_path, shapefile_path, output_folder) {
   if (!file.exists(dataset_path)) {
     stop("File does not exist.")
   }
@@ -61,4 +61,4 @@ generate_map <- function(dataset_path, shapefile_path, output_folder) {
 #shapefile_path <- "Datasets/morocco.shp"
 #output_folder <- "output"
 
-#data_list <- generate_map(dataset_path, shapefile_path, output_folder)
+#data_list <- data_vis(dataset_path, shapefile_path, output_folder)

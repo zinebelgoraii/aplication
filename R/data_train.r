@@ -1,4 +1,4 @@
-generate_train_test_data <- function(list) {
+data_train <- function(list) {
   data_coords <- list$data_coords
   shapefile_path <- list$shapefile_path
   output_folder <- list$output_folder
@@ -33,5 +33,5 @@ generate_train_test_data <- function(list) {
               output_folder = output_folder))
 }
 
-#train_test_data <- generate_train_test_data(data_list)
+#train_test_data <- data_train(data_list)
 

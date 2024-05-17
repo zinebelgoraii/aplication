@@ -6,7 +6,7 @@
 #' @param output_folder Path to the output folder.
 #' @return NULL
 #' @export
-predict_maxent <- function(list) {
+predict <- function(list) {
   pres_train <- list$pres_train
   backg_train <- list$backg_train
   pres_test <- list$pres_test
