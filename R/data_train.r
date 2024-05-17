@@ -1,8 +1,7 @@
-data_train <- function(list) {
+data_train <- function(list,input_file) {
   data_coords <- list$data_coords
   shapefile_path <- list$shapefile_path
   output_folder <- list$output_folder
-  input_file <- "predicteur/predictors_masked.tif"
   predictors_masked <- brick(input_file)
   
   shapefile <- shapefile(shapefile_path)
