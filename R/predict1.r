@@ -10,42 +10,43 @@ predict_rf <- function(list) {
   input_file <- list$input_file
   library(pROC)
   library(ranger)
-    library(raster)
-    library(ggplot2)
-    library(sp)
-    library(sf)
-    library(openxlsx)
-    library(dismo)
+  library(raster)
+  library(ggplot2)
+  library(sp)
+  library(sf)
+  library(openxlsx)
+  library(dismo)
 
-  predictors_masked <- brick(input_file)
   
-  shapefile <- shapefile(shapefile_path)
-  shapefile_sf <- st_as_sf(shapefile)
-  
+  predictors_masked <- raster::brick(input_file)
+
+  shapefile <- raster::shapefile(shapefile_path)
+  shapefile_sf <- sf::st_as_sf(shapefile)
+
   # Create response vector for training data
   response <- c(rep(1, nrow(pres_train)), rep(0, nrow(backg_train)))
-  
+
   # Extract predictor values for training data
   envtrain_presence <- extract(predictors_masked, pres_train)
   envtrain_background <- extract(predictors_masked, backg_train)
-  
+
   # Combine presence and background data
   envtrain <- rbind(envtrain_presence, envtrain_background)
-  
+
   # Create data frame with response and predictor values
   envtrain <- data.frame(response = response, envtrain)
-  
+
   # Remove rows with missing values
   envtrain <- envtrain[complete.cases(envtrain), ]
-  
+
   evtrain2 <- envtrain
   evtrain2$response <- as.factor(evtrain2$response)
-  
+
   prNum <- as.numeric(table(evtrain2$response)["1"])
   bgNum <- as.numeric(table(evtrain2$response)["0"])
   casewts <- ifelse(evtrain2$response == 1, 1, bgNum / prNum)
-  
-  rng_dws <- ranger(formula = response ~ .,
+
+  rng_dws <- ranger::ranger(formula = response ~ .,
                     data = evtrain2, 
                     num.trees = 1000,
                     probability = TRUE,
@@ -53,8 +54,8 @@ predict_rf <- function(list) {
                     case.weights = casewts,
                     num.threads = 6)
   # Predict to raster layers
-  pred_rng_dws <- predict(predictors_masked, rng_dws, fun = function(model, ...) predict(model, ...)$predictions[,"1"])
-  
+  pred_rng_dws <- dismo::predict(predictors_masked, rng_dws, fun = function(model, ...)
+    predict(model, ...)$predictions[,"1"])
   spdf <- as(pred_rng_dws, "SpatialPixelsDataFrame")
   df_dws_cl1 <- as.data.frame(spdf, xy = TRUE)
   
