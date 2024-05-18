@@ -54,8 +54,8 @@ predict_rf <- function(list) {
                     case.weights = casewts,
                     num.threads = 6)
   # Predict to raster layers
-  pred_rng_dws <- dismo::predict(predictors_masked, rng_dws, fun = function(model, ...)
-    predict(model, ...)$predictions[,"1"])
+  pred_rng_dws <- dismo::predict(predictors_masked, rng_dws,
+                        fun = function(model, ...) predict(model, ...)$predictions[,"1"])
   spdf <- as(pred_rng_dws, "SpatialPixelsDataFrame")
   df_dws_cl1 <- as.data.frame(spdf, xy = TRUE)
   
