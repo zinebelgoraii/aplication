@@ -3,4 +3,6 @@
 export(data_vis)
 export(data_train)
 export(predict)
-export(predict1)
+export(evaluate_models)
+export(predict_maxent)
+export(predict_rf)
