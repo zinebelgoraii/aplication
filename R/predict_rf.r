@@ -1,4 +1,6 @@
 predict_rf <- function(list) {
+  message("Début de la fonction predict_rf.")
+  
   pres_train <- list$pres_train
   backg_train <- list$backg_train
   pres_test <- list$pres_test
@@ -7,11 +9,11 @@ predict_rf <- function(list) {
   output_folder <- list$output_folder
   input_file <- list$input_file
   
+  message("Chargement des fichiers raster et shapefile.")
   predictors_masked <- raster::brick(input_file)
   shapefile <- raster::shapefile(shapefile_path)
   shapefile_sf <- sf::st_as_sf(shapefile)
   
-  # Nécessaire pour la conversion de coordonnées
   convert_coordinates_to_dataframe <- function(coordinates) {
     if (inherits(coordinates, "matrix")) {
       data_frame <- as.data.frame(coordinates)
@@ -23,29 +25,24 @@ predict_rf <- function(list) {
     }
   }
   
-  # Créer une liste des noms des points à convertir
   points_to_convert <- c("pres_train", "pres_test", "backg_train", "backg_test")
   
-  # Boucle sur la liste et convertit les coordonnées en data frames
+  message("Conversion des coordonnées en data frames.")
   converted_points <- list()
   for (point in points_to_convert) {
+    message(paste("Conversion des coordonnées pour", point, "."))
     converted_points[[point]] <- convert_coordinates_to_dataframe(sp::coordinates(list[[point]]))
   }
   
-  # Créer le vecteur de réponse pour les données d'entraînement
+  message("Création du vecteur de réponse pour les données d'entraînement.")
   response <- c(rep(1, nrow(converted_points[["pres_train"]])), rep(0, nrow(converted_points[["backg_train"]])))
   
-  # Extraire les valeurs des prédicteurs pour les données d'entraînement
+  message("Extraction des valeurs des prédicteurs pour les données d'entraînement.")
   envtrain_presence <- raster::extract(predictors_masked, converted_points[["pres_train"]])
   envtrain_background <- raster::extract(predictors_masked, converted_points[["backg_train"]])
   
-  # Combiner les données de présence et d'arrière-plan
   envtrain <- rbind(envtrain_presence, envtrain_background)
-  
-  # Créer un data frame avec la réponse et les valeurs des prédicteurs
   envtrain <- data.frame(response = response, envtrain)
-  
-  # Supprimer les lignes avec des valeurs manquantes
   envtrain <- envtrain[complete.cases(envtrain), ]
   
   evtrain2 <- envtrain
@@ -55,6 +52,7 @@ predict_rf <- function(list) {
   bgNum <- as.numeric(table(evtrain2$response)["0"])
   casewts <- ifelse(evtrain2$response == 1, 1, bgNum / prNum)
   
+  message("Entraînement du modèle Random Forest.")
   rng_dws <- ranger::ranger(formula = response ~ .,
                             data = evtrain2, 
                             num.trees = 1000,
@@ -62,7 +60,8 @@ predict_rf <- function(list) {
                             sample.fraction = bgNum / prNum,
                             case.weights = casewts,
                             num.threads = 6)
-  # Prédire les couches raster
+  
+  message("Prédiction des couches raster avec le modèle entraîné.")
   pred_rng_dws <- dismo::predict(predictors_masked, rng_dws,
                                  fun = function(model, ...) predict(model, ...)$predictions[,"1"])
   
@@ -79,10 +78,11 @@ predict_rf <- function(list) {
     ggplot2::theme(legend.position = "right") +
     ggplot2::geom_polygon(data = shapefile, ggplot2::aes(x = long, y = lat, group = group), fill = NA)
   
+  message("Sauvegarde de la carte de prédiction.")
   output_plot <- file.path(output_folder, "randomForest_plot.png")
   ggplot2::ggsave(output_plot, plot = rfmap, width = 10, height = 8)
   
-  # Prédire sur l'ensemble de test
+  message("Prédiction sur l'ensemble de test.")
   response_test <- c(rep(1, nrow(converted_points[["pres_test"]])), rep(0, nrow(converted_points[["backg_test"]])))
   envtest_presence <- raster::extract(predictors_masked, converted_points[["pres_test"]])
   envtest_background <- raster::extract(predictors_masked, converted_points[["backg_test"]])
@@ -98,14 +98,16 @@ predict_rf <- function(list) {
   
   predictions <- predict(rng_dws, data = test_data)$predictions[, "1"]
   
-  # Calculer l'AUC en utilisant pROC
+  message("Calcul de l'AUC.")
   roc_obj <- pROC::roc(test_labels, predictions)
   auc_value <- pROC::auc(roc_obj)
   
-  # Calculer la superficie prédite
+  message("Calcul de la superficie prédite.")
   predicted_area <- sum(pred_rng_dws[] >= 0.5, na.rm = TRUE) * raster::res(pred_rng_dws)[1] * raster::res(pred_rng_dws)[2]
   
-  # Enregistrer les résultats dans Excel
+  message("Enregistrement des résultats dans un fichier Excel.")
   results <- data.frame(Model = "Random Forest", AUC = auc_value, Predicted_Area = predicted_area)
+  
+  message("Fin de la fonction predict_rf.")
   return(list(model = rng_dws, evaluation = results, prediction = pred_rng_dws))
 }
