@@ -15,7 +15,8 @@ Imports:
   geodata,
   pROC,
   ranger,
-  openxlsx
+  openxlsx,
+  profvis
   
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
