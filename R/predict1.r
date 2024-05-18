@@ -2,15 +2,13 @@
 
 predict_rf <- function(list) {
   
-  pres_train <- train_test_data$pres_train
-  backg_train <- train_test_data$backg_train
-  pres_test <- train_test_data$pres_test
-  backg_test <- train_test_data$backg_test
-  shapefile_path <- train_test_data$shapefile_path
-  output_folder <- train_test_data$output_folder
-  input_file <- train_test_data$input_file
-  
-  
+  pres_train <- list$pres_train
+  backg_train <- list$backg_train
+  pres_test <- list$pres_test
+  backg_test <- list$backg_test
+  shapefile_path <- list$shapefile_path
+  output_folder <- list$output_folder
+  input_file <- list$input_file
   
   predictors_masked <- raster::brick(input_file)
   
@@ -97,13 +95,13 @@ predict_rf <- function(list) {
 
 predict_maxent <- function(list) {
   
-  pres_train <- train_test_data$pres_train
-  backg_train <- train_test_data$backg_train
-  pres_test <- train_test_data$pres_test
-  backg_test <- train_test_data$backg_test
-  shapefile_path <- train_test_data$shapefile_path
-  output_folder <- train_test_data$output_folder
-  input_file <- train_test_data$input_file
+  pres_train <- list$pres_train
+  backg_train <- list$backg_train
+  pres_test <- list$pres_test
+  backg_test <- list$backg_test
+  shapefile_path <- list$shapefile_path
+  output_folder <- list$output_folder
+  input_file <- list$input_file
   
   predictors_masked <- raster::brick(input_file)
   
