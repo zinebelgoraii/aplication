@@ -3,4 +3,4 @@
 export(data_vis)
 export(data_train)
 export(predict)
-
+export(predict1)

@@ -1,12 +1,22 @@
 Package: SDM3
-Title: What the Package Does (One Line, Title Case)
+Title: Fitting 'Maxent,RF.XGBoost' Species Distribution Models with your data
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+ADate: 2024-05-15
+Author: ELGORAI Zineb
+Maintainer: ELGORAI Zineb <zineb.elgorai@iav.ac.ma>
+Description: Procedures to fit species distributions models from occurrence records and environmental variables. Model structure is the same as for the 'Maxent' Java package, version 3.4.0, RF and XGBoost with the same feature types and regularization options. 
+License: MIT + file LICENSE
+Imports:
+  dismo,
+  sf,
+  sp,
+  ggplot2,
+  raster,
+  geodata,
+  pROC,
+  ranger,
+  openxlsx
+  
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
