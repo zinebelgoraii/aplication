@@ -24,7 +24,6 @@ data_train <- function(list, input_file) {
   } else {
     warning("Failed to generate training and testing data.")
   }
-  
   # Returning the relevant data as a list
   return(list(
     pres_train = pres_train,
@@ -36,7 +35,5 @@ data_train <- function(list, input_file) {
     input_file = input_file
   ))
 }
-
-
 #train_test_data <- data_train(data_list)
 
