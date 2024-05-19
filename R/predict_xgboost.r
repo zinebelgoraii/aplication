@@ -31,6 +31,17 @@ predict_xgboost <- function(list) {
   predictors_masked <- raster::brick(input_file)
   shapefile <- raster::shapefile(shapefile_path)
   shapefile_sf <- sf::st_as_sf(shapefile)
+
+  # Créer le nom du sous-dossier en fonction du nom de la fonction utilisée
+  subfolder_name <- paste0("XGBoost")
+  
+  # Créer le chemin complet du dossier de sortie
+  output_folder1 <- file.path(output_folder, subfolder_name)
+  
+  # Vérifier si le dossier existe déjà, sinon le créer
+  if (!file.exists(output_folder1)) {
+    dir.create(output_folder1, recursive = TRUE)
+  }
   
   # Convert coordinates to dataframe
   convert_coordinates_to_dataframe <- function(coordinates) {
@@ -57,8 +68,8 @@ predict_xgboost <- function(list) {
   
   # Training data extraction
   cat("Extraction des valeurs des prédicteurs pour les données d'entraînement.\n")
-  envtrain_presence <- raster::extract(predictors_masked, pres_train)
-  envtrain_background <- raster::extract(predictors_masked, backg_train)
+  envtrain_presence <- raster::extract(predictors_masked, converted_points[["pres_train"]])
+  envtrain_background <- raster::extract(predictors_masked,converted_points[["backg_train"]] )
   
   # Combine presence and background data
   envtrain <- rbind(envtrain_presence, envtrain_background)
@@ -71,8 +82,8 @@ predict_xgboost <- function(list) {
   
   # Testing data extraction
   cat("Extraction des valeurs des prédicteurs pour les données de test.\n")
-  envtest_presence <- raster::extract(predictors_masked, pres_test)
-  envtest_background <- raster::extract(predictors_masked, backg_test)
+  envtest_presence <- raster::extract(predictors_masked, converted_points[["pres_test"]])
+  envtest_background <- raster::extract(predictors_masked, converted_points[["backg_test"]])
   
   # Combine presence and background data for testing
   envtest <- rbind(envtest_presence, envtest_background)
@@ -113,65 +124,91 @@ predict_xgboost <- function(list) {
     nrounds = 100,
     verbose = 1
   )
-  
-  # Variable importance
-  cat("Calcul de l'importance des variables.\n")
-  importance_matrix <- xgboost::xgb.importance(
-    feature_names = colnames(xgb_train), 
-    model = xgb_model
-  )
-  
-  # Plot variable importance
-  xgboost::xgb.plot.importance(importance_matrix)
-  
-  # Predictions on test data
-  cat("Prédiction sur les données de test.\n")
-  xgb_preds <- dismo::predict(xgb_model, xgb_test, reshape = TRUE)
-  xgb_preds <- as.data.frame(xgb_preds)
-  
-  xgb_preds$PredictedClass <- ifelse(xgb_preds$xgb_preds >= 0.5, "1", "0")
-  xgb_preds$ActualClass <- levels(envtrain$response)[y_test + 1]
-  
-  # Accuracy
-  accuracy <- sum(xgb_preds$PredictedClass == xgb_preds$ActualClass) / nrow(xgb_preds)
-  cat("Précision du modèle: ", accuracy, "\n")
-  
-  # Confusion matrix
-  cm <- caret::confusionMatrix(factor(xgb_preds$ActualClass), factor(xgb_preds$PredictedClass))
-  cfm <- dplyr::as_tibble(cm$table)
-  cvms::plot_confusion_matrix(cfm, target_col = "Reference", prediction_col = "Prediction", counts_col = "n")
-  # Spatial predictions
-  
-  cat("Prédictions spatiales avec le modèle XGBoost.\n")
+
   ext_shapefile <- raster::extent(shapefile)
-  predictors_matrix <-  raster::as.matrix(predictors_masked)
-  predictions <- dismo::predict(xgb_model, newdata = predictors_matrix,ext = ext_shapefile)
-  # Create raster for predictions
+  cat("prediction du modèle XGBoost.\n")
+  # Ou si vous préférez une matrice :
+  predictors_matrix <- raster::as.matrix(predictors_masked)
+
+  # Faire des prédictions avec votre modèle XGBoost
+  predictions <- raster::predict(xgb_model, newdata = predictors_matrix, ext = ext_shapefile)
+
+  cat("evaluation du modèle XGBoost.\n")
+
+  # Evaluate the model
+  test <- dismo::predict(xgb_model, newdata = as.matrix(X_test))
+
+  e_xgboost1 <- predicts::pa_evaluate(p = test[y_test == 1], a = test[y_test == 0])
+
+  thxgboost <- e_xgboost1@thresholds$equal_sens_spec
+
+  # Create an empty raster with the same dimensions as the input raster
   predictions_raster <- raster::raster(ext_shapefile, nrows = nrow(predictors_masked), ncols = ncol(predictors_masked))
+
+  # Assign the predictions to the raster cells
   raster::values(predictions_raster) <- predictions
+
+  # Optionally, set the projection of the raster if necessary
   raster::projection(predictions_raster) <- raster::projection(predictors_masked)
-  
-  # Mask predictions with shapefile
+
+
   pre <- raster::mask(predictions_raster, shapefile)
-  
-  # Convert raster to dataframe
-  miaw <- raster::as.data.frame(pre, xy = TRUE)
-  
-  # Plot spatial predictions
-  ggplot2::ggplot(miaw, ggplot2::aes(x = x, y = y, fill = layer)) +
+
+  # Save the predicted area raster
+  output_raster <- file.path(output_folder1, "xgb_prediction_global.tif")
+  terra::writeRaster(pre, output_raster, overwrite = TRUE)
+
+  spdf <- as(pre, "SpatialPixelsDataFrame")    
+  #Convertir le raster en data frame
+  df_xg <- as.data.frame(spdf, xy = TRUE)
+
+  xgb_map <- ggplot2::ggplot(df_xg, ggplot2::aes(x = x, y = y, fill = layer)) +
     ggplot2::geom_raster() +
     ggplot2::scale_fill_gradientn(colors = terrain.colors(10)[10:1]) +
-    ggplot2::labs(fill = "Intensité de présence d'arganier") +
+    ggplot2::labs(fill = "likelihood") +
     ggplot2::coord_equal() +
-    ggplot2::ggtitle("Prédictions spatiales avec XGBoost") +
+    ggplot2::ggtitle("XGBoost model prediction") +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "right") +
     ggplot2::geom_polygon(data = shapefile, ggplot2::aes(x = long, y = lat, group = group), fill = NA)
   
-  # Save the plot
-  output_plot <- file.path(output_folder, "xgboost_predictions_plot.png")
-  ggplot2::ggsave(output_plot, width = 10, height = 8)
+  cat("Sauvegarde de la carte de prédiction.\n")
+  output_plot <- file.path(output_folder1, "xgb_prediction_global.png")
+  ggplot2::ggsave(output_plot, plot = xgb_map, width = 10, height = 8)
+  
+  cat("prediction de la carte avec th.\n")
+  pre1 <- terra::rast(pre)
 
-  cat("Fin de la fonction predict_xgboost.\n")
-  return(list(model = xgb_model, importance = importance_matrix, predictions = predictions_raster, accuracy = accuracy, confusion_matrix = cm))
+  # Apply threshold to prediction
+  rxgboost <- pre1 > thxgboost
+
+  rr1xgboost <- terra::ifel(rxgboost == 0, NA, rxgboost)
+
+  # Save the predicted area raster
+  output_raster <- file.path(output_folder1, "xgb_predicted_area_with_th.tif")
+  terra::writeRaster(rr1xgboost, output_raster, overwrite = TRUE)
+
+  # Calculate the area in km^2
+  surface_pred_xgb <- terra::expanse(rr1xgboost, unit = "km")
+
+  df_xgb <- as.data.frame(rr1xgboost, xy = TRUE)
+  # Tracer la carte avec ggplot2
+  xgb_th <- ggplot2::ggplot(data = df_xgb, ggplot2::aes(x = x, y = y)) + 
+    ggplot2::geom_raster(ggplot2::aes(fill = "Présence de l'espece")) +  # Utiliser une seule couleur (vert) avec une légende spécifique
+    ggplot2::geom_polygon(data = ggplot2::fortify(shapefile), ggplot2::aes(x = long, y = lat, group = group), fill = NA, color = "black") + 
+    ggplot2::coord_equal() + 
+    ggplot2::ggtitle("XGBoost model prediction de presence avec th") + 
+    ggplot2::theme_minimal() + 
+    ggplot2::theme(legend.position = "right") +
+    ggplot2::scale_fill_manual(name = "Légende", values = "green", labels = "Présence de l'espece")
+
+  # Save the plot
+  output_plot <- file.path(output_folder1, "xgboost_predicted_area_with_th.png")
+  ggplot2::ggsave(output_plot, width = 10, height = 8)
+ 
+  # Save results
+  results_xgboost <- data.frame(Model = "XGBoost", AUC = e_xgboost1@stats[["auc"]], Predicted_Area = surface_pred_xgb$area)
+
+  return(list(model = xgb_model, evaluation = results_xgboost, prediction = pre))
+
 }

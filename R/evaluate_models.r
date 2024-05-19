@@ -1,24 +1,30 @@
+evaluate_models <- function(results_maxent, results_rf, results_xgboost, output_folder) {
+  auc_rf <- results_rf$evaluation$AUC
+  auc_maxent <- results_maxent$evaluation$AUC
+  auc_xgboost <- results_xgboost$evaluation$AUC
 
-evaluate_models <- function(rf_result, maxent_result, output_folder) {
-  auc_rf <- rf_result$evaluation$AUC
-  auc_maxent <- maxent_result$evaluation$AUC
-  best_model <- if (auc_rf > auc_maxent) "Random Forest" else "Maxent"
-  
-  pred_rf <- rf_result$prediction
-  pred_maxent <- maxent_result$prediction
-  
-  area_rf <- sum(raster::values(pred_rf) > 0.5) * raster::res(pred_rf)[1] * raster::res(pred_rf)[2]
-  area_maxent <- sum(raster::values(pred_maxent) > 0.5) * raster::res(pred_maxent)[1] * raster::res(pred_maxent)[2]
+  # Find the best model based on AUC
+  if (auc_rf > auc_maxent && auc_rf > auc_xgboost) {
+    best_model <- "Random Forest"
+    best_area <- results_rf$evaluation$Predicted_Area
+  } else if (auc_maxent > auc_rf && auc_maxent > auc_xgboost) {
+    best_model <- "Maxent"
+    best_area <- results_maxent$evaluation$Predicted_Area
+  } else {
+    best_model <- "XGBoost"
+    best_area <- results_xgboost$evaluation$Predicted_Area
+  }
   
   results <- data.frame(
-    Model = c("Random Forest", "Maxent"),
-    AUC = c(auc_rf, auc_maxent),
-    Area = c(area_rf, area_maxent)
+    Model = c("Random Forest", "Maxent", "XGBoost"),
+    AUC = c(auc_rf, auc_maxent, auc_xgboost),
+    Area = c(best_area, best_area, best_area)
   )
   
-  openxlsx::write.xlsx(results, file.path(output_folder, "model_evaluation_results.xlsx"), rowNames = FALSE)
+  # Write results to Excel
+  excel_filename <- file.path(output_folder, "model_evaluation_results.xlsx")
+  openxlsx::write.xlsx(results, excel_filename, rowNames = FALSE)
   
-  cat("Evaluation results saved successfully at:", file.path(output_folder, "model_evaluation_results.xlsx"), "\n")
+  cat("Evaluation results saved successfully at:", excel_filename, "\n")
   cat("Best model:", best_model, "\n")
 }
-

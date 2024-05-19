@@ -1,5 +1,5 @@
 Package: SDM3
-Title: Fitting 'Maxent,RF.XGBoost' Species Distribution Models with your data
+Title: Fitting 'Maxent,RF et XGBoost' Species Distribution Models with your data
 Version: 0.0.0.9000
 ADate: 2024-05-15
 Author: ELGORAI Zineb
@@ -13,14 +13,12 @@ Imports:
   ggplot2,
   raster,
   geodata,
-  pROC,
+  predicts,
   ranger,
   openxlsx,
   xgboost,
-  caTools,
   dplyr,
-  cvms,
-  caret
+  terra
   
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
