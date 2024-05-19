@@ -146,9 +146,8 @@ predict_rf <- function(list) {
     output_plot <- file.path(output_folder1, "rf_predicted_area_with_th.png")
     ggplot2::ggsave(output_plot, plot = rf_th, width = 10, height = 8)
   
-
   cat("Enregistrement des résultats .\n")
-  results_rf <- data.frame(Model = "Random Forest", AUC = eval_rf@stats[["auc"]], Predicted_Area = surface_pred_rf)
+  results_rf <- data.frame(Model = "Random Forest", AUC = eval_rf@stats[["auc"]], Predicted_Area = surface_pred_rf$area)
   
   cat("Fin de la fonction predict_rf.\n")
   return(list(model = rng_dws, evaluation = results_rf, prediction = pred_rng_dws))

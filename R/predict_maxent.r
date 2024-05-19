@@ -108,7 +108,7 @@ predict_maxent <- function(list) {
     ggplot2::ggsave(output_plot, plot = maxent_th, width = 10, height = 8)
   
   # Save results
-  results_maxent <- data.frame(Model = "Maxent", AUC = eval_maxent@stats[["auc"]], Predicted_Area = surface_pred_maxent)
+  results_maxent <- data.frame(Model = "Maxent", AUC = eval_maxent@stats[["auc"]], Predicted_Area = surface_pred_maxent$area)
   return(list(model = mx, evaluation = results_maxent, prediction = p_mx))
 
 }
