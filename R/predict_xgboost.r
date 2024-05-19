@@ -155,7 +155,7 @@ predict_xgboost <- function(list) {
   pre <- raster::mask(predictions_raster, shapefile)
   
   # Convert raster to dataframe
-  miaw <- as.data.frame(pre, xy = TRUE)
+  miaw <- raster::as.data.frame(pre, xy = TRUE)
   
   # Plot spatial predictions
   ggplot2::ggplot(miaw, ggplot2::aes(x = x, y = y, fill = layer)) +
