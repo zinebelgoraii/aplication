@@ -16,7 +16,11 @@ Imports:
   pROC,
   ranger,
   openxlsx,
-  profvis
+  xgboost,
+  caTools,
+  dplyr,
+  cvms,
+  caret
   
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
