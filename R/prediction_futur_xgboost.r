@@ -18,16 +18,17 @@ prediction_futur_xgboost <- function(model, input_file, predicteurs_path, shapef
   cat("Créer un dataframe des fichiers prédicteurs.\n")
   
   # Extraire le nom du modèle, du scénario et l'année pour chaque fichier (base package)
-  model_scenario_year_info <- sapply(file_names, function(file) {
+    model_scenario_year_info <- sapply(file_names, function(file) {
     # Extraire le nom de fichier sans le chemin (base package)
     file_name <- basename(file)
     # Extraire le modèle, le scénario et l'année en utilisant des expressions régulières (base package)
-    model <- gsub("wc2\\.1_2.5m_bioc_(.*?)_ssp.*?_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
-    scenario <- gsub("wc2\\.1_2.5m_bioc_.*?_(ssp.*?)_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
-    year <- gsub("wc2\\.1_2.5m_bioc_.*?_ssp.*?_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
+    model <- gsub(".*_(.*?)_ssp.*?_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
+    scenario <- gsub(".*_.*?_(ssp.*?)_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
+    year <- gsub(".*_.*?_ssp.*?_(\\d{4}-\\d{4})\\.tif", "\\1", file_name)
     # Retourner le modèle, le scénario et l'année sous forme de vecteur (base package)
     c(model = model, scenario = scenario, year = year)
-  })
+    })
+
   
   # Convertir en data frame pour une meilleure lisibilité (base package)
   model_scenario_year_df <- data.frame(t(model_scenario_year_info))
@@ -84,7 +85,7 @@ prediction_futur_xgboost <- function(model, input_file, predicteurs_path, shapef
       
       pre <- raster::mask(predictions_raster, shapefile)
       # Enregistrer le fichier prédit dans le dossier de sortie spécifique au scénario (terra package)
-      output_file <- file.path(scenario_output_folder, gsub(".*wc2\\.1_2.5m_bioc_", "", basename(file_path)))
+      output_file <- file.path(scenario_output_folder, basename(file_path))
       terra::writeRaster(pre, filename = output_file, format = "GTiff", overwrite = TRUE)
     }
   }
