@@ -4,7 +4,7 @@ library(SDM3)
 
 dataset_path <- "loooooooooop/Datasets/xy.csv"
 shapefile_path <- "loooooooooop/Datasets/morocco.shp"
-output_folder <- "output4"
+output_folder <- "output2"
 input_file <- "E:/aaaaaaaaaaaaa/loooooooooop/Datasets/predictors_masked19.tif"
 
 futur <- "E:/aaaaaaaaaaaaa/data futur"
