@@ -125,20 +125,20 @@ prediction_futur_mx <- function(model, input_file, predicteurs_path, shapefile_p
   
 
   read_and_prepare_raster <- function(file_path) {
-  raster_data <- raster(file_path)
+  raster_data <- raster::raster(file_path)
   raster_df <- as.data.frame(rasterToPoints(raster_data))
   colnames(raster_df) <- c("x", "y", "value")
   return(raster_df)
 }
 generate_plot <- function(raster_df, scenario, year) {
-  ggplot(raster_df, aes(x = x, y = y, fill = value)) +
-    geom_raster() +
+  ggplot2::ggplot(raster_df, ggplot2::aes(x = x, y = y, fill = value)) +
+    ggplot2::geom_raster() +
     ggplot2::scale_fill_gradientn(colors = terrain.colors(10)[10:1]) +
     ggplot2::coord_equal() + 
     ggplot2::theme_minimal() + 
-    labs(title = paste("Scenario:", scenario, "\nYear:", year),
+    ggplot2::labs(title = paste("Scenario:", scenario, "\nYear:", year),
          fill = "Likelihood") +
-    theme_minimal()
+    ggplot2::theme_minimal()
 }
 
 
@@ -160,11 +160,10 @@ plot_all_scenarios_years <- function(output_folder, unique_scenarios, unique_yea
   }
   
   # Arrange the plots in a 4x4 grid
-  grid.arrange(grobs = plot_list, ncol = 4)
+  gridExtra::grid.arrange(grobs = plot_list, ncol = 4)
 }
 
 plot_all_scenarios_years(output_folder, unique_scenarios, unique_years)
-
 
 
 }
