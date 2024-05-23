@@ -126,7 +126,7 @@ prediction_futur_mx <- function(model, input_file, predicteurs_path, shapefile_p
 
   read_and_prepare_raster <- function(file_path) {
   raster_data <- raster::raster(file_path)
-  raster_df <- as.data.frame(rasterToPoints(raster_data))
+  raster_df <- as.data.frame(raster::rasterToPoints(raster_data))
   colnames(raster_df) <- c("x", "y", "value")
   return(raster_df)
 }
@@ -141,7 +141,6 @@ generate_plot <- function(raster_df, scenario, year) {
     ggplot2::theme_minimal()
 }
 
-
 plot_all_scenarios_years <- function(output_folder, unique_scenarios, unique_years) {
   plot_list <- list()
   
@@ -149,7 +148,7 @@ plot_all_scenarios_years <- function(output_folder, unique_scenarios, unique_yea
     for (year in unique_years) {
       file_path <- file.path(output_folder, scenario, "moyenne", paste("moyenne_", year, ".tif", sep = ""))
       
-      if (file.exists(file_path)) {
+      if (base::file.exists(file_path)) {
         raster_df <- read_and_prepare_raster(file_path)
         plot <- generate_plot(raster_df, scenario, year)
         plot_list <- c(plot_list, list(plot))
