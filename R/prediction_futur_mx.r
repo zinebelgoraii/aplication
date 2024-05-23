@@ -37,6 +37,9 @@ prediction_futur_mx <- function(model, input_file, predicteurs_path, shapefile_p
   
   # Extraire les valeurs uniques de la colonne "scenario" (base package)
   unique_scenarios <- unique(model_scenario_year_df$scenario)
+
+  # Extraire les valeurs uniques de la colonne "scenario" (base package)
+  unique_years <- unique(model_scenario_year_df$year)
   
   # Pour chaque valeur unique de scénario, effectuer les opérations raster et enregistrer les résultats
   for (scenario in unique_scenarios) {
@@ -120,4 +123,50 @@ prediction_futur_mx <- function(model, input_file, predicteurs_path, shapefile_p
     }
   }
   
+
+  read_and_prepare_raster <- function(file_path) {
+  raster_data <- raster(file_path)
+  raster_df <- as.data.frame(rasterToPoints(raster_data))
+  colnames(raster_df) <- c("x", "y", "value")
+  return(raster_df)
 }
+generate_plot <- function(raster_df, scenario, year) {
+  ggplot(raster_df, aes(x = x, y = y, fill = value)) +
+    geom_raster() +
+    ggplot2::scale_fill_gradientn(colors = terrain.colors(10)[10:1]) +
+    ggplot2::coord_equal() + 
+    ggplot2::theme_minimal() + 
+    labs(title = paste("Scenario:", scenario, "\nYear:", year),
+         fill = "Likelihood") +
+    theme_minimal()
+}
+
+
+plot_all_scenarios_years <- function(output_folder, unique_scenarios, unique_years) {
+  plot_list <- list()
+  
+  for (scenario in unique_scenarios) {
+    for (year in unique_years) {
+      file_path <- file.path(output_folder, scenario, "moyenne", paste("moyenne_", year, ".tif", sep = ""))
+      
+      if (file.exists(file_path)) {
+        raster_df <- read_and_prepare_raster(file_path)
+        plot <- generate_plot(raster_df, scenario, year)
+        plot_list <- c(plot_list, list(plot))
+      } else {
+        print(paste("Le fichier", file_path, "n'existe pas."))
+      }
+    }
+  }
+  
+  # Arrange the plots in a 4x4 grid
+  grid.arrange(grobs = plot_list, ncol = 4)
+}
+
+plot_all_scenarios_years(output_folder, unique_scenarios, unique_years)
+
+
+
+}
+
+
